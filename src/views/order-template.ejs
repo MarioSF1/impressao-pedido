@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Pedido #<%= order.number_order %></title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 8px;
+            background-color: #fff;
+            color: #333;
+        }
+
+        .page {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            background: white;
+        }
+
+        .footer {
+            text-align: center;
+            margin-bottom: 0px;
+        }
+
+        .section {
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 4px;
+            margin-bottom: 4px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .grid-item p, .section p {
+            margin: 0 0 4px 0;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #555;
+            font-size: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4px;
+        }
+
+        th, td {
+            border: 1px solid #eee;
+            padding: 3px;
+            text-align: left;
+            font-size: 6px;
+        }
+
+        th {
+            background-color: #f8f8f8;
+            font-weight: bold;
+        }
+
+        .text-right {
+            text-align: right;
+
+        }
+
+        .item-child {
+            padding-left: 20px;
+            font-style: italic;
+            color: #666;
+            background-color: #fdfdfd;
+        }
+
+        .summary-table {
+            width: 50%;
+            margin-left: auto;
+            margin-top: 20px;
+        }
+
+        .summary-table td {
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        
+        <div class="section">
+            <div class="section-title">Informações do Pedido #<%= order.number_order %></div>
+            <div class="grid">
+                <div class="grid-item">
+                    <p><span class="label">Data do Pedido:</span> <%= new Date(order.billing_date || Date.now()).toLocaleDateString('pt-BR') %></p>
+                    <p><span class="label">Canal de Venda:</span> <%= order.sales_channel?.description || 'Não informado' %></p>
+                    <p><span class="label">Forma de Pagamento:</span> <%= order.payment_method?.description || 'Não informado' %></p>
+                </div>
+                <div class="grid-item">
+                    <p><span class="label">Vendedor:</span> <%= order.seller?.name || 'Não informado' %></p>
+                    <p><span class="label">Digitador:</span> <%= order.user?.name || 'Não informado' %></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Dados do Cliente</div>
+            <p><span class="label">Razão Social:</span> <%= order.client.name %></p>
+            <p><span class="label">CPF/CNPJ:</span> <%= order.client.document %></p>
+            <p><span class="label">Endereço:</span> <%= order.client.address || 'Não informado' %></p>
+        </div>
+        
+        <% if (order?.carrier && order.carrier.document != null && order.carrier.document != "" && order.carrier.document != undefined) { %>
+        <div class="section">
+            <div class="section-title">Transportadora</div>
+            <div class="grid-item"> 
+                <p><span class="label">Razão Social:</span> <%= order.carrier.name %></p>
+                <p><span class="label">CPF/CNPJ:</span> <%= order.carrier.document %></p>
+            </div>
+        </div>
+        <% } %>
+        
+        <div class="section">
+            <div class="section-title">Itens do Pedido</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cód.</th>
+                        <th>Descrição</th>
+                        <th class="text-right">Qtd.</th>
+                        <th class="text-right">Vlr. Unit.</th>
+                        <th class="text-right">Desconto</th>
+                        <th class="text-right">Frete</th>
+                        <th class="text-right">Seguro</th>
+                        <th class="text-right">Outros</th>
+                        <th class="text-right">ICMS ST</th>
+                        <th class="text-right">IPI</th>
+                        <th class="text-right">FCP ST</th>
+                        <th class="text-right">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% function renderItem(item, isChild) { %>
+                        <tr class="<%= isChild ? 'item-child' : '' %>">
+                            <td><%= isChild ? '↳ ' : '' %> <%= item.item_id %></td>
+                            <td><%= item.name %></td>
+                            <td class="text-right"><%= item.quantity?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.price?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.discount_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.shipping_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.insurance_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.other_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.st_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.ipi_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.fcp_st_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= (item.subtotal + (item.st_value || 0) + (item.ipi_value || 0) + (item.fcp_st_value || 0)).toFixed(2) || '0.00' %></td>
+                        </tr>
+                        <% if (item.items && item.items.length > 0) { %>
+                            <% item.items.forEach(child => renderItem(child, true)) %>
+                        <% } %>
+                    <% } %>
+                    <% order.items.forEach(item => renderItem(item, false)) %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary-table">
+            <table>
+                <% let total_items_value = 0; %>
+
+                <%
+                    function somarItens(item) {
+                        // Ignora itens "pai" (kits) para não somar o valor deles e dos filhos
+                        if (item.kit !== true && item.quantity && item.price) {
+                            total_items_value += item.quantity * item.price;
+                        }
+
+                        // Se o item tiver filhos, chama a função para cada um
+                        if (item.items && item.items.length > 0) {
+                            item.items.forEach(child => somarItens(child));
+                        }
+                    }
+                %>
+
+                <% order.items.forEach(item => somarItens(item)); %>
+
+                <tr>
+                    <td><span class="label">Total de Produtos:</span></td>
+                    <td style="font-size: 8px;" class="text-right">R$ <%= total_items_value.toFixed(2) %></td>
+                </tr>
+
+                <% if (order.values.st_total > 0) { %>
+                    <tr>
+                        <td><span class="label">ICMS ST:</span></td>
+                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.st_total?.toFixed(2) || '0.00' %></td>
+                    </tr>
+                <% } %>
+                <% if (order.values.ipi_total > 0) { %>
+                    <tr>
+                        <td><span class="label">IPI:</span></td>
+                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.ipi_total?.toFixed(2) || '0.00' %></td>
+                    </tr>
+                <% } %>
+                <% if (order.values.fcp_st_total > 0) { %>
+                    <tr>
+                        <td><span class="label">FCP ST:</span></td>
+                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.fcp_st_total?.toFixed(2) || '0.00' %></td>
+                    </tr>
+                <% } %>
+                <tr>
+                    <td><span class="label">Desconto:</span></td>
+                    <td style="font-size: 8px;" class="text-right">R$ <%= order.values.discount_total?.toFixed(2) || '0.00' %></td>
+                </tr>
+                <tr>
+                    <td><span class="label">Frete:</span></td>
+                    <td style="font-size: 8px;" class="text-right">R$ <%= order.values.shipping_total?.toFixed(2) || '0.00' %></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold; font-size: 12px;"><span class="label">Total do Pedido:</span></td>
+                    <td class="text-right" style="font-weight: bold; font-size: 12px;">R$ <%= order.values.total?.toFixed(2) || '0.00' %></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+             <div class="section-title">Observações</div>
+             <p><%= order.note || 'Nenhuma observação.' %></p>
+        </div>
+
+        <div class="footer">
+             <p>Este documento é uma representação do pedido de venda e não serve como recibo.</p>
+        </div>
+    </div>
+</body>
+
+</html>
