@@ -14,7 +14,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Usa as rotas de pedido com o prefixo /pedidos
-app.use('/api/v1/pedidos', pedidoRoutes);
+app.use('/api/v1/order', pedidoRoutes);
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando com TypeScript na porta ${PORT}`);

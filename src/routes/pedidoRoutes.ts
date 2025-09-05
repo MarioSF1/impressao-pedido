@@ -9,7 +9,7 @@ import { Order } from '../types/Order';
 
 const router = Router();
 
-const processarImpressao = async (order: Order) => {
+const processPrint = async (order: Order) => {
     console.log(`Iniciando processamento do perdido #${order.id}`);
     console.log('Pedido enviado para a impressora (simulação).');
 
@@ -24,7 +24,7 @@ const processarImpressao = async (order: Order) => {
 
         // 2. Definir os caminhos dinâmicos
         // const sanitizedDocument = order.client.document.replace(/\D/g, ''); // Remove caracteres não numéricos
-        const dirPath = path.join(process.cwd(), 'assets', order.holding.client_id, order.enterprise.client_id, 'pedidos', 'impressao');
+        const dirPath = path.join(process.cwd(), 'assets', order.holding.client_id, order.enterprise.client_id, 'order', 'print');
         const filePath = path.join(dirPath, `${order.number_order}.pdf`);
 
         // 3. Criar a estrutura de pastas se não existir
@@ -63,19 +63,60 @@ const processarImpressao = async (order: Order) => {
     }
 };
 
-router.post('/imprimir', (req: Request, res: Response) => {
+const getPrint = async (holding_client_id: string, enterprise_client_id: string, order_number: string, res: Response) => {
+    // assest/[holding_client_id]/[enterprise_client_id]/order/print/[number_order]
+    try {
+        if (!holding_client_id || !enterprise_client_id || !order_number) {
+            console.error(`Pedido #${order_number}, falta informações para obter a impressão.`);
+            return; // Para a execução desta função
+        }
+
+        // 2. Definir os caminhos dinâmicos
+        const dirPath = path.join(process.cwd(), 'assets', holding_client_id, enterprise_client_id, 'order', 'print');
+        const filePath = path.join(dirPath, `${order_number}.pdf`);
+
+        res.download(filePath, (err) => {
+            if (err) {
+                console.error("Erro ao baixar o arquivo:", err);
+                if (!res.headersSent) {
+                    res.status(404).send('Arquivo não encontrado.');
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Erro inesperado na função getPrint:', error);
+        // Garante que uma resposta seja enviada mesmo se ocorrer um erro inesperado
+        if (!res.headersSent) {
+            res.status(500).send('Erro interno ao processar o arquivo.');
+        }
+    }
+}
+
+router.post('/print', (req: Request, res: Response) => {
     const dadosDoPedido: Order = req.body;
 
-    if (!dadosDoPedido || !dadosDoPedido.id || !dadosDoPedido.client.document) {
-        return res.status(400).json({ status: 'erro', mensagem: 'Dados do order inválidos. ID e Documento do cliente são obrigatórios.' });
+    if (!dadosDoPedido || !dadosDoPedido.id || !dadosDoPedido.client.document || !dadosDoPedido.holding.client_id || !dadosDoPedido.enterprise.client_id || !dadosDoPedido.number_order) {
+        return res.status(400).json({ success: false, mensagem: 'Dados do order inválidos. ID e Documento do cliente são obrigatórios.' });
     }
 
-    processarImpressao(dadosDoPedido);
+    processPrint(dadosDoPedido);
 
     res.status(202).json({
         success: true,
         mensagem: 'Pedido recebido e está sendo processado para impressão.'
     });
+});
+
+router.get('/download', (req: Request, res: Response) => {
+    const { holding_client_id, enterprise_client_id, order_number } = req.query;
+
+    if (!holding_client_id || !enterprise_client_id || !order_number) {
+        return res.status(400).json({ success: false, mensagem: 'Dados do pedido inválidos.' });
+    }
+    // assest/[holding_client_id]/[enterprise_client_id]/order/print/[number_order]
+    getPrint(holding_client_id as string, enterprise_client_id as string, order_number as string, res);
+
 });
 
 export default router;
