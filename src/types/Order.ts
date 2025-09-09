@@ -16,7 +16,7 @@ export interface ItemOrder {
     subtotal: number | null;
     kit: boolean | null;
     parent_sales_order_item_id: number | null;
-    items: ItemOrder[] | null;
+    kit_items: ItemOrder[] | null;
     order_id: number | null;
     purchase_order_number: string | null;
     purchase_order_item_number: string | null;

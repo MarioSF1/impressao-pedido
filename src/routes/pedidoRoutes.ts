@@ -10,12 +10,12 @@ import { Order } from '../types/Order';
 const router = Router();
 
 const processPrint = async (order: Order) => {
-    console.log(`Iniciando processamento do perdido #${order.id}`);
+    console.log(`Iniciando processamento do perdido #${order.number_order}`);
     console.log('Pedido enviado para a impressora (simulação).');
 
     try {
         if (!order.holding.client_id || !order.enterprise.client_id) {
-            console.error(`Pedido #${order.id} cliente não possui documento para criar a pasta.`);
+            console.error(`Pedido #${order.number_order} cliente não possui documento para criar a pasta.`);
             return; // Para a execução desta função
         }
         // 1. Renderizar o HTML usando o template EJS
@@ -50,7 +50,7 @@ const processPrint = async (order: Order) => {
 
         await browser.close();
 
-        console.log(`PDF do order #${order.id} salvo em: ${filePath}`);
+        console.log(`PDF do order #${order.number_order} salvo em: ${filePath}`);
 
     } catch (error) {
         if (error instanceof Error) {
@@ -96,9 +96,35 @@ const getPrint = async (holding_client_id: string, enterprise_client_id: string,
 router.post('/print', (req: Request, res: Response) => {
     const dadosDoPedido: Order = req.body;
 
-    if (!dadosDoPedido || !dadosDoPedido.id || !dadosDoPedido.client.document || !dadosDoPedido.holding.client_id || !dadosDoPedido.enterprise.client_id || !dadosDoPedido.number_order) {
-        return res.status(400).json({ success: false, mensagem: 'Dados do order inválidos. ID e Documento do cliente são obrigatórios.' });
+    // ----- INÍCIO DO BLOCO DE DEPURAÇÃO -----
+    console.log("Recebido payload para impressão:", JSON.stringify(dadosDoPedido, null, 2));
+
+    if (!dadosDoPedido) {
+        console.error("FALHA NA VALIDAÇÃO: O corpo da requisição (dadosDoPedido) está vazio.");
+        return res.status(400).json({ success: false, mensagem: 'Corpo da requisição vazio.' });
     }
+    if (!dadosDoPedido.id) {
+        console.error("FALHA NA VALIDAÇÃO: dadosDoPedido.id está faltando ou é nulo/zero.", dadosDoPedido.id);
+        return res.status(400).json({ success: false, mensagem: 'ID do pedido é obrigatório.' });
+    }
+    if (!dadosDoPedido.client?.document) {
+        console.error("FALHA NA VALIDAÇÃO: dadosDoPedido.client.document está faltando.", dadosDoPedido.client);
+        return res.status(400).json({ success: false, mensagem: 'Documento do cliente é obrigatório.' });
+    }
+    if (!dadosDoPedido.holding?.client_id) {
+        console.error("FALHA NA VALIDAÇÃO: dadosDoPedido.holding.client_id está faltando.", dadosDoPedido.holding);
+        return res.status(400).json({ success: false, mensagem: 'Client ID da Holding é obrigatório.' });
+    }
+    if (!dadosDoPedido.enterprise?.client_id) {
+        console.error("FALHA NA VALIDAÇÃO: dadosDoPedido.enterprise.client_id está faltando.", dadosDoPedido.enterprise);
+        return res.status(400).json({ success: false, mensagem: 'Client ID da Empresa é obrigatório.' });
+    }
+    if (!dadosDoPedido.number_order) {
+        console.error("FALHA NA VALIDAÇÃO: dadosDoPedido.number_order está faltando ou é nulo/zero.", dadosDoPedido.number_order);
+        return res.status(400).json({ success: false, mensagem: 'Número do pedido é obrigatório.' });
+    }
+
+    // ----- FIM DO BLOCO DE DEPURAÇÃO -----
 
     processPrint(dadosDoPedido);
 

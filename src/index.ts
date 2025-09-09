@@ -6,11 +6,11 @@ const app: Express = express();
 const PORT: number = 3000;
 
 // Middleware para entender JSON
-app.use(express.json());
+app.use(express.json({ limit : '50mb'}));
 
 // Rota de "saúde" da aplicação
 app.get('/', (req: Request, res: Response) => {
-    res.send('Servidor de impressão está no ar! Use POST /pedidos/imprimir para enviar um pedido.');
+    res.send('Servidor de impressão está no ar! Use POST /order/print para enviar um pedido.');
 });
 
 // Usa as rotas de pedido com o prefixo /pedidos

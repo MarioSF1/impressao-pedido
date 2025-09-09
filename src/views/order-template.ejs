@@ -155,7 +155,7 @@
                     <% function renderItem(item, isChild) { %>
                         <tr class="<%= isChild ? 'item-child' : '' %>">
                             <td><%= isChild ? '↳ ' : '' %> <%= item.item_id %></td>
-                            <td><%= item.name %></td>
+                            <td><%= item.product_name %></td>
                             <td class="text-right"><%= item.quantity?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= item.price?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= item.discount_value?.toFixed(2) || '0.00' %></td>
@@ -167,8 +167,8 @@
                             <td class="text-right">R$ <%= item.fcp_st_value?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= (item.subtotal + (item.st_value || 0) + (item.ipi_value || 0) + (item.fcp_st_value || 0)).toFixed(2) || '0.00' %></td>
                         </tr>
-                        <% if (item.items && item.items.length > 0) { %>
-                            <% item.items.forEach(child => renderItem(child, true)) %>
+                        <% if (item.kit_items && item.kit_items.length > 0) { %>
+                            <% item.kit_items.forEach(child => renderItem(child, true)) %>
                         <% } %>
                     <% } %>
                     <% order.items.forEach(item => renderItem(item, false)) %>
@@ -188,8 +188,8 @@
                         }
 
                         // Se o item tiver filhos, chama a função para cada um
-                        if (item.items && item.items.length > 0) {
-                            item.items.forEach(child => somarItens(child));
+                        if (item.kit_items && item.kit_items.length > 0) {
+                            item.kit_items.forEach(child => somarItens(child));
                         }
                     }
                 %>
