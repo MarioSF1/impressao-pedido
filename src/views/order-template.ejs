@@ -154,7 +154,7 @@
                 <tbody>
                     <% function renderItem(item, isChild) { %>
                         <tr class="<%= isChild ? 'item-child' : '' %>">
-                            <td><%= isChild ? '↳ ' : '' %> <%= item.item_id %></td>
+                            <td><%= isChild ? '↳ ' : '' %> <%= item.product_code %></td>
                             <td><%= item.product_name %></td>
                             <td class="text-right"><%= item.quantity?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= item.price?.toFixed(2) || '0.00' %></td>
@@ -162,10 +162,10 @@
                             <td class="text-right">R$ <%= item.shipping_value?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= item.insurance_value?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= item.other_value?.toFixed(2) || '0.00' %></td>
-                            <td class="text-right">R$ <%= item.st_value?.toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= item.icms_st_value?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= item.ipi_value?.toFixed(2) || '0.00' %></td>
                             <td class="text-right">R$ <%= item.fcp_st_value?.toFixed(2) || '0.00' %></td>
-                            <td class="text-right">R$ <%= (item.subtotal + (item.st_value || 0) + (item.ipi_value || 0) + (item.fcp_st_value || 0)).toFixed(2) || '0.00' %></td>
+                            <td class="text-right">R$ <%= (item.subtotal + (item.icms_st_value || 0) + (item.ipi_value || 0) + (item.fcp_st_value || 0)).toFixed(2) || '0.00' %></td>
                         </tr>
                         <% if (item.kit_items && item.kit_items.length > 0) { %>
                             <% item.kit_items.forEach(child => renderItem(child, true)) %>

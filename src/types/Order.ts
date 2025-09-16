@@ -3,6 +3,7 @@ import { UUID } from "crypto";
 export interface ItemOrder {
     id: number;
     item_id: number | null;
+    product_code: string | null;
     name: string | null;
     quantity: number | null;
     unit_measure: string | null;

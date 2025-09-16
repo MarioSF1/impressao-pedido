@@ -11,12 +11,11 @@ const router = Router();
 
 const processPrint = async (order: Order) => {
     console.log(`Iniciando processamento do perdido #${order.number_order}`);
-    console.log('Pedido enviado para a impressora (simulação).');
 
     try {
         if (!order.holding.client_id || !order.enterprise.client_id) {
             console.error(`Pedido #${order.number_order} cliente não possui documento para criar a pasta.`);
-            return; // Para a execução desta função
+            return null; // Para a execução desta função
         }
         // 1. Renderizar o HTML usando o template EJS
         const templatePath = path.join(__dirname, '..', 'views', 'order-template.ejs');
@@ -31,7 +30,7 @@ const processPrint = async (order: Order) => {
         await fs.mkdir(dirPath, { recursive: true });
 
         // 4. Gerar o PDF a partir do HTML
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
         const page = await browser.newPage();
         await page.setContent(htmlRenderizado, { waitUntil: 'networkidle0' });
 
@@ -52,14 +51,19 @@ const processPrint = async (order: Order) => {
 
         console.log(`PDF do order #${order.number_order} salvo em: ${filePath}`);
 
+        return filePath;
+
     } catch (error) {
-        if (error instanceof Error) {
-            // Erro genérico
-            console.error('Erro inesperado ao notificar API externa:', error.message);
-        } else {
-            // Caso algo totalmente inesperado seja lançado
-            console.error('Ocorreu um erro desconhecido e não padrão:', error);
-        }
+        // ----- BLOCO CATCH MELHORADO -----
+        console.error("###########################################");
+        console.error("### ERRO CRÍTICO DENTRO DE processPrint ###");
+        console.error("###########################################");
+        
+        // Imprime o objeto de erro completo para obter o máximo de detalhes
+        console.error(error); 
+
+        // Retorna null para que a rota saiba que falhou
+        return null;
     }
 };
 
@@ -93,7 +97,7 @@ const getPrint = async (holding_client_id: string, enterprise_client_id: string,
     }
 }
 
-router.post('/print', (req: Request, res: Response) => {
+router.post('/print', async (req: Request, res: Response) => {
     const dadosDoPedido: Order = req.body;
 
     // ----- INÍCIO DO BLOCO DE DEPURAÇÃO -----
@@ -126,12 +130,31 @@ router.post('/print', (req: Request, res: Response) => {
 
     // ----- FIM DO BLOCO DE DEPURAÇÃO -----
 
-    processPrint(dadosDoPedido);
+    try {
+        const filePath = await processPrint(dadosDoPedido);
+        // 3. Verifica se a criação do PDF foi bem-sucedida
+        if (filePath) {
+            // 4. Constrói a URL pública
+            // Pega a parte do caminho a partir da pasta 'assets'
+            const relativePath = path.relative(path.join(process.cwd(), 'assets'), filePath);
+            
+            // Constrói a URL final usando o host da requisição e o prefixo estático
+            const fileUrl = `${req.protocol}://${req.get('host')}/static/${relativePath.replace(/\\/g, '/')}`;
 
-    res.status(202).json({
-        success: true,
-        mensagem: 'Pedido recebido e está sendo processado para impressão.'
-    });
+            // 5. Retorna a resposta de sucesso com a URL
+            res.status(200).json({ // Status 200 OK, pois a operação foi concluída
+                success: true,
+                mensagem: 'PDF gerado com sucesso.',
+                url: fileUrl
+            });
+        } else {
+            // Se processPrint retornou null, algo deu errado
+            res.status(500).json({ success: false, mensagem: 'Falha ao gerar o arquivo PDF.' });
+        }
+    } catch (error) {
+        console.error("Erro crítico na rota /print:", error);
+        res.status(500).json({ success: false, mensagem: 'Ocorreu um erro interno no servidor.' });
+    }
 });
 
 router.get('/download', (req: Request, res: Response) => {
