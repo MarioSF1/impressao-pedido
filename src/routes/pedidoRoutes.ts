@@ -15,14 +15,13 @@ const processPrint = async (order: Order) => {
     try {
         if (!order.holding.client_id || !order.enterprise.client_id) {
             console.error(`Pedido #${order.number_order} cliente não possui documento para criar a pasta.`);
-            return null; // Para a execução desta função
+            return null;
         }
         // 1. Renderizar o HTML usando o template EJS
         const templatePath = path.join(__dirname, '..', 'views', 'order-template.ejs');
         const htmlRenderizado = await ejs.renderFile(templatePath, { order: order });
 
         // 2. Definir os caminhos dinâmicos
-        // const sanitizedDocument = order.client.document.replace(/\D/g, ''); // Remove caracteres não numéricos
         const dirPath = path.join(process.cwd(), 'assets', order.holding.client_id, order.enterprise.client_id, 'order', 'print');
         const filePath = path.join(dirPath, `${order.number_order}.pdf`);
 
@@ -37,7 +36,7 @@ const processPrint = async (order: Order) => {
         // Ajuste as dimensões para um cupom de 80mm
         await page.pdf({
             path: filePath,
-            format: 'A4', // Define o formato da página como A4
+            format: 'A4',
             printBackground: true,
             margin: { // Define as margens da página (opcional)
                 top: '10mm',
@@ -54,15 +53,12 @@ const processPrint = async (order: Order) => {
         return filePath;
 
     } catch (error) {
-        // ----- BLOCO CATCH MELHORADO -----
         console.error("###########################################");
         console.error("### ERRO CRÍTICO DENTRO DE processPrint ###");
         console.error("###########################################");
         
-        // Imprime o objeto de erro completo para obter o máximo de detalhes
         console.error(error); 
 
-        // Retorna null para que a rota saiba que falhou
         return null;
     }
 };
@@ -72,7 +68,7 @@ const getPrint = async (holding_client_id: string, enterprise_client_id: string,
     try {
         if (!holding_client_id || !enterprise_client_id || !order_number) {
             console.error(`Pedido #${order_number}, falta informações para obter a impressão.`);
-            return; // Para a execução desta função
+            return; 
         }
 
         // 2. Definir os caminhos dinâmicos
@@ -90,7 +86,7 @@ const getPrint = async (holding_client_id: string, enterprise_client_id: string,
 
     } catch (error) {
         console.error('Erro inesperado na função getPrint:', error);
-        // Garante que uma resposta seja enviada mesmo se ocorrer um erro inesperado
+        
         if (!res.headersSent) {
             res.status(500).send('Erro interno ao processar o arquivo.');
         }
@@ -142,13 +138,12 @@ router.post('/print', async (req: Request, res: Response) => {
             const fileUrl = `${req.protocol}://${req.get('host')}/static/${relativePath.replace(/\\/g, '/')}`;
 
             // 5. Retorna a resposta de sucesso com a URL
-            res.status(200).json({ // Status 200 OK, pois a operação foi concluída
+            res.status(200).json({
                 success: true,
                 mensagem: 'PDF gerado com sucesso.',
                 url: fileUrl
             });
         } else {
-            // Se processPrint retornou null, algo deu errado
             res.status(500).json({ success: false, mensagem: 'Falha ao gerar o arquivo PDF.' });
         }
     } catch (error) {

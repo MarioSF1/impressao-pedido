@@ -87,19 +87,17 @@
 
         .summary-table {
             width: 40%;
-            --margin-left: auto;
-            --margin-top: 20px;
         }
 
         .summary-table td {
             border: none;
         }
 
-        .container-faturas-totais {
-            display: flex; /* Ativa o layout flexbox */
-            justify-content: space-between; /* Empurra os filhos para as extremidades (esquerda e direita) */
-            align-items: flex-start; /* Alinha os itens no topo, caso tenham alturas diferentes */
-            width: 100%; /* Garante que o container ocupe todo o espaço disponível */
+        .container-installments-totals {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start; 
+            width: 100%; 
         }
 
     </style>
@@ -184,7 +182,7 @@
             </table>
         </div>
 
-        <div class="container-faturas-totais">
+        <div class="container-installments-totals">
             <% if (Array.isArray(order.installment) && order.installment.length > 0) { %>
                 <div class="section" style="width: 40%;">
                     <div class="section-title">Faturas</div>
@@ -198,7 +196,6 @@
                         </thead>
                         <tbody>
                             <% order.installment.forEach(installment => { %>
-                                <%# CORREÇÃO: Cada fatura é uma linha <tr> com células <td> %>
                                 <tr>
                                     <td><%= installment.number %>/<%= installment.total_installments %></td>
                                     <td><%= new Date(installment.due_date).toLocaleDateString('pt-BR') %></td>
