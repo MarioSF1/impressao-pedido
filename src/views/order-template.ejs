@@ -86,14 +86,22 @@
         }
 
         .summary-table {
-            width: 50%;
-            margin-left: auto;
-            margin-top: 20px;
+            width: 40%;
+            --margin-left: auto;
+            --margin-top: 20px;
         }
 
         .summary-table td {
             border: none;
         }
+
+        .container-faturas-totais {
+            display: flex; /* Ativa o layout flexbox */
+            justify-content: space-between; /* Empurra os filhos para as extremidades (esquerda e direita) */
+            align-items: flex-start; /* Alinha os itens no topo, caso tenham alturas diferentes */
+            width: 100%; /* Garante que o container ocupe todo o espaço disponível */
+        }
+
     </style>
 </head>
 
@@ -176,62 +184,89 @@
             </table>
         </div>
 
-        <div class="summary-table">
-            <table>
-                <% let total_items_value = 0; %>
+        <div class="container-faturas-totais">
+            <% if (Array.isArray(order.installment) && order.installment.length > 0) { %>
+                <div class="section" style="width: 40%;">
+                    <div class="section-title">Faturas</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ordem</th>
+                                <th>Vencimento</th>
+                                <th class="text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% order.installment.forEach(installment => { %>
+                                <%# CORREÇÃO: Cada fatura é uma linha <tr> com células <td> %>
+                                <tr>
+                                    <td><%= installment.number %>/<%= installment.total_installments %></td>
+                                    <td><%= new Date(installment.due_date).toLocaleDateString('pt-BR') %></td>
+                                    <td class="text-right">R$ <%= installment.amount?.toFixed(2) || '0.00' %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
 
-                <%
-                    function somarItens(item) {
-                        // Ignora itens "pai" (kits) para não somar o valor deles e dos filhos
-                        if (item.kit !== true && item.quantity && item.price) {
-                            total_items_value += item.quantity * item.price;
+            <div class="summary-table">
+                <table>
+                    <% let total_items_value = 0; %>
+
+                    <%
+                        function somarItens(item) {
+                            // Ignora itens "pai" (kits) para não somar o valor deles e dos filhos
+                            if (item.kit !== true && item.quantity && item.price) {
+                                total_items_value += item.quantity * item.price;
+                            }
+
+                            // Se o item tiver filhos, chama a função para cada um
+                            if (item.kit_items && item.kit_items.length > 0) {
+                                item.kit_items.forEach(child => somarItens(child));
+                            }
                         }
+                    %>
 
-                        // Se o item tiver filhos, chama a função para cada um
-                        if (item.kit_items && item.kit_items.length > 0) {
-                            item.kit_items.forEach(child => somarItens(child));
-                        }
-                    }
-                %>
+                    <% order.items.forEach(item => somarItens(item)); %>
 
-                <% order.items.forEach(item => somarItens(item)); %>
-
-                <tr>
-                    <td><span class="label">Total de Produtos:</span></td>
-                    <td style="font-size: 8px;" class="text-right">R$ <%= total_items_value.toFixed(2) %></td>
-                </tr>
-
-                <% if (order.values.st_total > 0) { %>
                     <tr>
-                        <td><span class="label">ICMS ST:</span></td>
-                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.st_total?.toFixed(2) || '0.00' %></td>
+                        <td><span class="label">Total de Produtos:</span></td>
+                        <td style="font-size: 8px;" class="text-right">R$ <%= total_items_value.toFixed(2) %></td>
                     </tr>
-                <% } %>
-                <% if (order.values.ipi_total > 0) { %>
+
+                    <% if (order.values.st_total > 0) { %>
+                        <tr>
+                            <td><span class="label">ICMS ST:</span></td>
+                            <td style="font-size: 8px;" class="text-right">R$ <%= order.values.st_total?.toFixed(2) || '0.00' %></td>
+                        </tr>
+                    <% } %>
+                    <% if (order.values.ipi_total > 0) { %>
+                        <tr>
+                            <td><span class="label">IPI:</span></td>
+                            <td style="font-size: 8px;" class="text-right">R$ <%= order.values.ipi_total?.toFixed(2) || '0.00' %></td>
+                        </tr>
+                    <% } %>
+                    <% if (order.values.fcp_st_total > 0) { %>
+                        <tr>
+                            <td><span class="label">FCP ST:</span></td>
+                            <td style="font-size: 8px;" class="text-right">R$ <%= order.values.fcp_st_total?.toFixed(2) || '0.00' %></td>
+                        </tr>
+                    <% } %>
                     <tr>
-                        <td><span class="label">IPI:</span></td>
-                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.ipi_total?.toFixed(2) || '0.00' %></td>
+                        <td><span class="label">Desconto:</span></td>
+                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.discount_total?.toFixed(2) || '0.00' %></td>
                     </tr>
-                <% } %>
-                <% if (order.values.fcp_st_total > 0) { %>
                     <tr>
-                        <td><span class="label">FCP ST:</span></td>
-                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.fcp_st_total?.toFixed(2) || '0.00' %></td>
+                        <td><span class="label">Frete:</span></td>
+                        <td style="font-size: 8px;" class="text-right">R$ <%= order.values.shipping_total?.toFixed(2) || '0.00' %></td>
                     </tr>
-                <% } %>
-                <tr>
-                    <td><span class="label">Desconto:</span></td>
-                    <td style="font-size: 8px;" class="text-right">R$ <%= order.values.discount_total?.toFixed(2) || '0.00' %></td>
-                </tr>
-                <tr>
-                    <td><span class="label">Frete:</span></td>
-                    <td style="font-size: 8px;" class="text-right">R$ <%= order.values.shipping_total?.toFixed(2) || '0.00' %></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: bold; font-size: 12px;"><span class="label">Total do Pedido:</span></td>
-                    <td class="text-right" style="font-weight: bold; font-size: 12px;">R$ <%= order.values.total?.toFixed(2) || '0.00' %></td>
-                </tr>
-            </table>
+                    <tr>
+                        <td style="font-weight: bold; font-size: 12px;"><span class="label">Total do Pedido:</span></td>
+                        <td class="text-right" style="font-weight: bold; font-size: 12px;">R$ <%= order.values.total?.toFixed(2) || '0.00' %></td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
         <div class="section">

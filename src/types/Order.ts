@@ -1,4 +1,5 @@
 import { UUID } from "crypto";
+import { Installment } from "./Installment";
 
 export interface ItemOrder {
     id: number;
@@ -73,6 +74,7 @@ export interface Order {
     cfop_code: string | null;
     last_update: Date | null;
     hash_id: UUID | null;
+    installment: Installment[] | null;
     items: ItemOrder[];
     holding: {
         id: number | null;
